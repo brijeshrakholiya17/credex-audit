@@ -4,7 +4,7 @@
  
 ---
  
-## Day 1 — 2026-05-20
+## Day 1 — 2026-05-21
  
 **Hours worked:** 3
  
@@ -18,24 +18,25 @@ Next.js 14 App Router handles environment variables differently from Pages Route
 Had to decide between App Router and Pages Router. Went with App Router because server components make the shareable audit URL page (with OG meta tags) much simpler to implement — no need for `getServerSideProps`. Documented this decision in ARCHITECTURE.md draft.
  
 **Plan for tomorrow:**
-Build the complete SpendInputForm component with all 8 required tools, toggle UI, plan dropdowns, monthly spend inputs, seat counters, and localStorage persistence. Deploy to Vercel and verify form renders correctly on mobile.
+Build the core Advanced Financial Audit Engine to evaluate software waste using finance-focused heuristics and a high-priority startup credits trigger. Upgrade the Subscription Form by integrating real-world vendor pricing for dynamic plan dropdowns, auto-populating costs, and strict UI validation for missing fields. Develop the backend API routes (/api/audits/share, /api/leads, /api/send-email) to handle saving audit payloads to Supabase and capturing leads via Resend. Finally, write a robust mapping function to bridge the new granular form inputs with the legacy audit code to ensure seamless data flow into the advanced results UI.
  
 ---
 
-## Day 2 — 2026-05-21
+## Day 2 — 2026-05-22
  
-**Hours worked:** 4
+**Hours worked:** 8
  
 **What I did:**
-Built the complete `SpendInputForm` component. Implemented two-step flow: Step 1 is tool selection (8 tools with toggles that expand to show plan/spend/seats), Step 2 is team context (team size chips + use case selector). All 8 required tools included: Cursor, GitHub Copilot, Claude, ChatGPT, Anthropic API, OpenAI API, Gemini, and Windsurf. Wired localStorage persistence so form state survives page reloads — used a `useEffect` to load on mount and another to save on every state change. Added a floating summary bar at the bottom showing live tool count and total declared spend. Integrated the form into `app/page.tsx` with a hero landing section above it. Ran the app on mobile viewport (375px in Chrome DevTools) and fixed spacing issues. Pushed to Vercel, confirmed it works on the live URL.
+Engineered and deployed an Advanced Financial Audit Engine that evaluates AI tool subscriptions against finance-focused heuristics, including small-team overkill detection, cheaper alternative tool checks, and a high-priority "Credex" startup credits trigger for annual spends over $1,000. Integrated real-world vendor pricing (ChatGPT, Claude, Gemini, Copilot, Cursor, Windsurf) into the Subscription Form, enabling dynamic plan dropdowns and automatically populating exact monthly costs based on official pricing tiers. Implemented strict form validation and error UX, replacing silently disabled buttons with clear, interactive UI alerts for missing fields (ensuring seats, plans, and spend are defined). Bridged these new detailed inputs with the legacy audit code via a robust mapping function (getAuditToolId), ensuring zero data loss for Free/API tiers, and successfully piped advanced financial insights directly into the results UI cards. On the backend, created API routes (/api/audits/share, /api/leads, /api/send-email) to capture user data, save audit payloads safely to the Supabase audits table, and send formatted HTML audit reports via Resend. Finally, documented the financial justification layer in PRICING_DATA.md and updated setup documentation for deployment keys.
  
 **What I learned:**
-localStorage reads must be inside `useEffect` in Next.js App Router, not at the top level, because the server doesn't have access to `window`. Tried reading it outside `useEffect` first and got a hydration mismatch error. Also learned that shadcn/ui `Select` components need a `Portal` wrapper to prevent z-index issues when inside cards with `overflow: hidden`.
+Mapping complex, dynamic form data (tool + specific plan combinations) to strict legacy type strings requires highly precise data translation to prevent silent UI drops—especially for edge cases like Free tiers or API plans. Additionally, auto-populating input fields based on a pre-compiled pricing baseline drastically reduces user friction and ensures the financial math (monthly spend × seats) remains defensible and accurate.
  
 **Blockers / what I'm stuck on:**
-The toggle animation for expanding tool cards was janky at first — CSS `height: auto` doesn't animate. Solved it using `max-height` transition with a generous max value instead of `height`. Not perfect but smooth enough for the MVP.
+Initially faced a challenge bridging the newly granular form inputs (e.g., tool: "chatgpt", plan: "Team") with the older, strict type strings expected by the underlying legacy audit code. Resolved this by building the dynamic mapping function to securely translate the inputs without breaking the existing dashboard UI or losing data during the transition.
  
 **Plan for tomorrow:**
-Build the core audit engine in `lib/auditEngine.ts` and pricing rules in `lib/pricing.ts`. This is the most important logic in the entire project. Will verify every pricing number against official vendor pages and document sources in PRICING_DATA.md simultaneously.
+Refine the HTML email template generated by Resend to ensure perfect cross-client mobile responsiveness, implement advanced analytics tracking for user interactions within the results dashboard, and perform comprehensive end-to-end testing of the lead capture and "Credex Startup Credits" booking flow.
  
 ---
+

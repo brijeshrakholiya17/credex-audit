@@ -28,17 +28,53 @@ const AI_TOOLS = [
   { id: "windsurf", name: "Windsurf", icon: "▲" },
 ] as const;
 
-const PLANS = ["Hobby", "Pro", "Business", "Enterprise"] as const;
+export const TOOL_PLANS: Record<string, {name: string, price: number}[]> = {
+  "chatgpt": [
+    { name: "Free", price: 0 },
+    { name: "Plus", price: 20 },
+    { name: "Team", price: 30 },
+  ],
+  "claude": [
+    { name: "Free", price: 0 },
+    { name: "Pro", price: 20 },
+    { name: "Team", price: 30 },
+  ],
+  "gemini": [
+    { name: "Free", price: 0 },
+    { name: "Advanced", price: 19.99 },
+  ],
+  "github-copilot": [
+    { name: "Individual", price: 10 },
+    { name: "Business", price: 19 },
+    { name: "Enterprise", price: 39 },
+  ],
+  "cursor": [
+    { name: "Hobby", price: 0 },
+    { name: "Pro", price: 20 },
+    { name: "Business", price: 40 },
+  ],
+  "windsurf": [
+    { name: "Free", price: 0 },
+    { name: "Pro", price: 20 },
+    { name: "Teams", price: 40 },
+  ],
+  "openai-api": [
+    { name: "Pay-as-you-go", price: 0 },
+  ],
+  "anthropic-api": [
+    { name: "Pay-as-you-go", price: 0 },
+  ],
+};
+
 const TEAM_SIZES = ["Just me", "2-5", "6-15", "16-50", "51-200", "200+"] as const;
 const USE_CASES = ["Coding", "Writing", "Data", "Research", "Mixed"] as const;
 
-type Plan = (typeof PLANS)[number];
 type TeamSize = (typeof TEAM_SIZES)[number];
 type UseCase = (typeof USE_CASES)[number];
 
 export interface ToolConfig {
   enabled: boolean;
-  plan: Plan;
+  plan: string;
   monthlySpend: number;
   seats: number;
 }
@@ -49,7 +85,7 @@ export interface SpendFormData {
   useCases: UseCase[];
 }
 
-export type { Plan, TeamSize, UseCase };
+export type { TeamSize, UseCase };
 
 export interface SubscriptionFormProps {
   onSubmit: (data: SpendFormData) => void;
@@ -57,7 +93,7 @@ export interface SubscriptionFormProps {
 
 const defaultToolConfig: ToolConfig = {
   enabled: false,
-  plan: "Hobby",
+  plan: "",
   monthlySpend: 0,
   seats: 1,
 };
@@ -255,8 +291,7 @@ export function SubscriptionForm({ onSubmit }: SubscriptionFormProps) {
               <Button
                 type="button"
                 onClick={handleRunAudit}
-                disabled={enabledTools.length === 0}
-                className="bg-[#cc785c] text-white hover:bg-[#b86a50] disabled:opacity-50"
+                className="bg-[#cc785c] text-white hover:bg-[#b86a50]"
               >
                 Run Audit
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -344,15 +379,18 @@ function ToolCard({ tool, config, onUpdate }: ToolCardProps) {
               <label className="text-xs text-[#57534e] mb-1.5 block">Plan</label>
               <Select
                 value={config.plan}
-                onValueChange={(plan: Plan) => onUpdate({ plan })}
+                onValueChange={(plan: string) => {
+                  const selectedPlan = TOOL_PLANS[tool.id].find(p => p.name === plan);
+                  onUpdate({ plan, monthlySpend: selectedPlan ? selectedPlan.price : config.monthlySpend });
+                }}
               >
                 <SelectTrigger className="w-full h-8 text-xs bg-white border-[#e7e5e4] text-[#1c1917]">
-                  <SelectValue />
+                  <SelectValue placeholder="Select plan" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-[#e7e5e4] text-[#1c1917]">
-                  {PLANS.map((plan) => (
-                    <SelectItem key={plan} value={plan} className="text-xs text-[#1c1917]">
-                      {plan}
+                  {TOOL_PLANS[tool.id].map((p) => (
+                    <SelectItem key={p.name} value={p.name} className="text-xs text-[#1c1917]">
+                      {p.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

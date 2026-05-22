@@ -1,44 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
-import type { AuditResult } from "@/lib/auditEngine";
-import { createAdminClient } from "@/lib/supabase/admin";
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { id, result } = body
 
-export async function POST(request: Request) {
-  try {
-    const body = (await request.json()) as {
-      id?: string;
-      result?: AuditResult;
-    };
+  const supabaseServer = createClient()
+  const { error } = await supabaseServer
+    .from('audits')
+    .insert({
+      share_id: id,
+      results: result,
+      total_monthly_savings: result.potentialMonthlySavings,
+      total_annual_savings: result.potentialMonthlySavings * 12,
+    })
 
-    const { id, result } = body;
-
-    if (!id || !result) {
-      return NextResponse.json(
-        { error: "Missing id or result" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = createAdminClient();
-    const { error } = await supabase.from("shared_audits").upsert({
-      id,
-      payload: result,
-    });
-
-    if (error) {
-      console.error("Supabase upsert error:", error);
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ id, path: `/share/${id}` });
-  } catch (err) {
-    console.error("Share API error:", err);
-    return NextResponse.json(
-      { error: "Failed to save audit" },
-      { status: 500 }
-    );
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

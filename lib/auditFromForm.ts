@@ -44,6 +44,8 @@ export function buildAuditFromForm(formData: SpendFormData): AuditOutput {
       ...legacyAudit,
       totalMonthlySpend: declaredMonthly,
       totalAnnualSpend: Math.round(declaredMonthly * 12 * 100) / 100,
+      // Ensure we display all enabled tools, including free tiers or APIs that don't map to legacy subscriptions
+      subscriptions: spendFormToDisplaySubscriptions(formData),
     };
   } else {
     baseAudit = {

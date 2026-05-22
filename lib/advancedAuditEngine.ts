@@ -47,22 +47,25 @@ export function validateFormData(formData: SpendFormData): {
   const errors: string[] = [];
 
   // Check if at least one tool is enabled
-  const enabledTools = Object.values(formData.tools).filter((t) => t.enabled);
-  if (enabledTools.length === 0) {
+  const enabledEntries = Object.entries(formData.tools).filter(([, t]) => t.enabled);
+  if (enabledEntries.length === 0) {
     errors.push("Please select at least one AI tool");
   }
 
-  // Check if monthly spend is valid and positive
-  enabledTools.forEach((tool) => {
-    if (typeof tool.monthlySpend !== "number" || tool.monthlySpend < 0) {
-      errors.push("Monthly spend must be a valid positive number");
+  // Check if plan, monthly spend and seats are valid
+  enabledEntries.forEach(([toolId, tool]) => {
+    const toolName = toolId.charAt(0).toUpperCase() + toolId.slice(1).replace(/-/g, " ");
+    
+    if (!tool.plan || tool.plan.trim() === "") {
+      errors.push(`Please select a plan for ${toolName}`);
     }
-  });
+    
+    if (typeof tool.monthlySpend !== "number" || tool.monthlySpend < 0 || isNaN(tool.monthlySpend)) {
+      errors.push(`Monthly spend for ${toolName} must be a valid number (can be 0)`);
+    }
 
-  // Check if seats is valid and positive
-  enabledTools.forEach((tool) => {
-    if (typeof tool.seats !== "number" || tool.seats < 1) {
-      errors.push("Number of seats must be at least 1");
+    if (typeof tool.seats !== "number" || tool.seats < 1 || isNaN(tool.seats)) {
+      errors.push(`Number of seats for ${toolName} must be at least 1`);
     }
   });
 
@@ -307,6 +310,132 @@ function checkDuplicateAPIandUI(formData: SpendFormData): Insight | null {
 }
 
 /**
+ * Check for small team overkill (Team plan for 2 people)
+ */
+function checkSmallTeamOverkill(formData: SpendFormData): Insight | null {
+  const isSmallTeam = ["Just me", "2-5"].includes(formData.teamSize || "");
+  if (!isSmallTeam) return null;
+
+  const affectedTools: string[] = [];
+  let savings = 0;
+
+  Object.entries(formData.tools).forEach(([tool, config]) => {
+    if (config.enabled && ["Business", "Enterprise", "Team", "Teams"].includes(config.plan)) {
+      affectedTools.push(tool);
+      // Pro is usually $20, Business usually $30+. Assume moving to Pro saves the difference.
+      const proCost = 20;
+      if (config.monthlySpend > proCost) {
+        savings += (config.monthlySpend - proCost) * config.seats;
+      } else {
+        savings += 10 * config.seats; // Fallback estimate
+      }
+    }
+  });
+
+  if (affectedTools.length === 0) return null;
+
+  return {
+    type: "warning",
+    title: "Small Team on Business/Enterprise Plan",
+    message: `Your team size is small, but you're paying for Business/Enterprise tiers for ${affectedTools.join(", ")}. Downgrading to Pro plans could provide all the features you need at a lower cost.`,
+    savingsPotential: savings,
+    affectedTools,
+    actionable: true,
+  };
+}
+
+/**
+ * Check if there is a cheaper plan from the same vendor
+ */
+function checkCheaperVendorPlan(formData: SpendFormData): Insight | null {
+  // If use cases are light and they are paying for Pro, suggest Hobby/Free tier
+  if (formData.useCases.length === 0) return null;
+  const lightUseCases = formData.useCases.every((uc) => ["Writing", "Research"].includes(uc));
+  
+  const affectedTools = CHAT_TOOLS.filter(
+    (tool) => formData.tools[tool]?.enabled && formData.tools[tool]?.plan === "Pro"
+  );
+
+  if (lightUseCases && affectedTools.length > 0) {
+    const savings = affectedTools.reduce(
+      (sum, tool) => sum + (formData.tools[tool]?.monthlySpend || 0) * (formData.tools[tool]?.seats || 1),
+      0
+    );
+
+    return {
+      type: "info",
+      title: "Cheaper Vendor Plan Available",
+      message: `Your use cases (${formData.useCases.join(", ")}) are relatively light. You might be able to downgrade ${affectedTools.join(", ")} to their free/Hobby tiers to save money.`,
+      savingsPotential: savings,
+      affectedTools,
+      actionable: true,
+    };
+  }
+  return null;
+}
+
+/**
+ * Check if there is a cheaper alternative tool for their use case
+ */
+function checkCheaperAlternative(formData: SpendFormData): Insight | null {
+  const isCoding = formData.useCases.includes("Coding");
+  if (!isCoding) return null;
+
+  const expensiveTools = ["cursor", "windsurf"].filter(
+    (tool) => formData.tools[tool]?.enabled
+  );
+  const hasCopilot = formData.tools["github-copilot"]?.enabled;
+
+  if (expensiveTools.length > 0 && !hasCopilot) {
+    const totalSpend = expensiveTools.reduce(
+      (sum, tool) => sum + (formData.tools[tool]?.monthlySpend || 20) * (formData.tools[tool]?.seats || 1),
+      0
+    );
+    
+    // GitHub Copilot is typically $10/mo
+    const alternativeCost = expensiveTools.reduce((sum, tool) => sum + 10 * (formData.tools[tool]?.seats || 1), 0);
+    const savings = totalSpend - alternativeCost;
+
+    if (savings > 0) {
+      return {
+        type: "info",
+        title: "Cheaper Alternative Tool Available",
+        message: `You're using premium coding assistants (${expensiveTools.join(", ")}). If your team primarily needs standard autocomplete rather than advanced agentic features, GitHub Copilot is a cheaper alternative at $10/mo.`,
+        savingsPotential: savings,
+        affectedTools: expensiveTools,
+        actionable: true,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Check if they are paying retail vs utilizing startup credits (Credex angle)
+ */
+function checkCredexStartupCredits(formData: SpendFormData): Insight | null {
+  const totalMonthlySpend = Object.entries(formData.tools)
+    .filter(([, config]) => config.enabled)
+    .reduce((sum, [, config]) => sum + config.monthlySpend * config.seats, 0);
+
+  const totalAnnualSpend = totalMonthlySpend * 12;
+
+  // Trigger if annual spend is significant (> $1000)
+  if (totalAnnualSpend >= 1000) {
+    return {
+      type: "warning",
+      title: "Paying Retail vs Credits (Credex)",
+      message: `Your projected annual AI spend is $${totalAnnualSpend.toLocaleString()}. High spenders and startups are often eligible for vendor credits. Stop paying retail on a corporate card—use Credex to unlock up to $100k in free credits.`,
+      savingsPotential: totalMonthlySpend, // Assuming they could eliminate their monthly bill with credits
+      actionable: true,
+    };
+  }
+
+  return null;
+}
+
+/**
  * Positive reinforcement - detect when they're optimized
  */
 function checkOptimizedSetup(
@@ -374,7 +503,20 @@ export function generateAdvancedAuditReport(
   const apiConsolidation = checkAPIConsolidation(formData);
   if (apiConsolidation) collectedInsights.push(apiConsolidation);
 
-  // 4. Positive reinforcement
+  // 4. New heuristic checks
+  const smallTeamOverkill = checkSmallTeamOverkill(formData);
+  if (smallTeamOverkill) collectedInsights.push(smallTeamOverkill);
+
+  const cheaperVendorPlan = checkCheaperVendorPlan(formData);
+  if (cheaperVendorPlan) collectedInsights.push(cheaperVendorPlan);
+
+  const cheaperAlternative = checkCheaperAlternative(formData);
+  if (cheaperAlternative) collectedInsights.push(cheaperAlternative);
+
+  const credexCredits = checkCredexStartupCredits(formData);
+  if (credexCredits) collectedInsights.push(credexCredits);
+
+  // 5. Positive reinforcement
   const optimizedSetup = checkOptimizedSetup(formData, collectedInsights);
   if (optimizedSetup) collectedInsights.push(optimizedSetup);
 
