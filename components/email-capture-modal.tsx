@@ -24,7 +24,7 @@ export interface LeadFormData {
 export interface EmailCaptureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  auditResult: AuditResult;
+  auditResult: AuditResult | Record<string, any>; // Accept both AuditResult and EnhancedAuditOutput
   totalSavings: number;
   onSuccess?: () => void;
 }

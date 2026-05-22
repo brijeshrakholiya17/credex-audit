@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       email?: string;
-      auditData?: AuditResult;
+      auditData?: AuditResult | Record<string, any>;
       companyName?: string;
       website?: string;
     };
@@ -36,11 +36,32 @@ export async function POST(request: Request) {
       );
     }
 
-    await sendAuditEmail({ email, auditData, companyName });
+    // Check if Resend API key is configured
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey || resendKey.includes("your_api_key")) {
+      return NextResponse.json(
+        { 
+          error: "Email service not configured. Please set RESEND_API_KEY in environment variables.",
+          configured: !!resendKey
+        },
+        { status: 500 }
+      );
+    }
 
-    return NextResponse.json({ ok: true });
+    try {
+      await sendAuditEmail({ email, auditData, companyName });
+      return NextResponse.json({ ok: true });
+    } catch (emailErr) {
+      console.error("Email send error:", emailErr);
+      return NextResponse.json(
+        { 
+          error: emailErr instanceof Error ? emailErr.message : "Failed to send email"
+        },
+        { status: 500 }
+      );
+    }
   } catch (err) {
-    console.error("Send email error:", err);
+    console.error("Send email route error:", err);
     const message =
       err instanceof Error ? err.message : "Failed to send email";
     return NextResponse.json({ error: message }, { status: 500 });

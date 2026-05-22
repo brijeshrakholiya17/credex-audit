@@ -12,11 +12,15 @@ import {
   TrendingDown,
   ArrowRightLeft,
   Loader2,
+  AlertTriangle,
+  Info,
+  Zap,
 } from "lucide-react";
 
 import { EmailCaptureModal } from "@/components/email-capture-modal";
 import { SectionEyebrow } from "@/components/ui/page-container";
 import type { AuditResult } from "@/lib/auditEngine";
+import type { EnhancedAuditOutput } from "@/lib/auditFromForm";
 import { mapAuditResultToToolResults } from "@/lib/auditResultView";
 
 const toolIcons: Record<string, string> = {
@@ -31,8 +35,34 @@ const toolIcons: Record<string, string> = {
 };
 
 export interface AuditResultsProps {
-  result: AuditResult;
+  result: AuditResult | EnhancedAuditOutput;
   onEmailCaptureClick?: () => void;
+}
+
+function isEnhancedAudit(result: AuditResult | EnhancedAuditOutput): result is EnhancedAuditOutput {
+  return "advancedInsights" in result;
+}
+
+function getInsightIcon(type: "warning" | "success" | "info") {
+  switch (type) {
+    case "warning":
+      return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+    case "success":
+      return <Zap className="w-5 h-5 text-emerald-600" />;
+    case "info":
+      return <Info className="w-5 h-5 text-blue-600" />;
+  }
+}
+
+function getInsightBg(type: "warning" | "success" | "info") {
+  switch (type) {
+    case "warning":
+      return "border-orange-200 bg-orange-50/80";
+    case "success":
+      return "border-emerald-200 bg-emerald-50/80";
+    case "info":
+      return "border-blue-200 bg-blue-50/80";
+  }
 }
 
 export function AuditResults({ result, onEmailCaptureClick }: AuditResultsProps) {
@@ -50,6 +80,7 @@ export function AuditResults({ result, onEmailCaptureClick }: AuditResultsProps)
   const annualSavings = totalSavings * 12;
   const showConsultationCTA = totalSavings > 500;
   const showNewsletterOnly = totalSavings < 100;
+  const enhanced = isEnhancedAudit(result);
 
   const openEmailModal = () => {
     if (onEmailCaptureClick) {
@@ -152,6 +183,64 @@ export function AuditResults({ result, onEmailCaptureClick }: AuditResultsProps)
             </Button>
           )}
         </section>
+
+        {/* Advanced Insights Section */}
+        {enhanced && result.advancedInsights.length > 0 && (
+          <section className="space-y-5 w-full">
+            <div className="flex items-center justify-between">
+              <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">
+                🧠 Financial Insights
+              </h3>
+              {result.riskLevel && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-[#57534e]">Risk Level:</span>
+                  <span
+                    className={`font-medium px-2.5 py-1 rounded-full ${
+                      result.riskLevel === "high"
+                        ? "bg-orange-100 text-orange-700"
+                        : result.riskLevel === "medium"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {result.riskLevel.charAt(0).toUpperCase() + result.riskLevel.slice(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {result.advancedInsights.map((insight, idx) => (
+                <Card
+                  key={idx}
+                  className={`border ${getInsightBg(insight.type)} shadow-none`}
+                >
+                  <CardContent className="p-5 sm:p-6">
+                    <div className="flex gap-4">
+                      <div className="shrink-0 mt-0.5">
+                        {getInsightIcon(insight.type)}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-[#1c1917] mb-2">
+                          {insight.title}
+                        </h4>
+                        <p className="text-sm text-[#57534e] leading-relaxed mb-3">
+                          {insight.message}
+                        </p>
+                        {insight.savingsPotential ? (
+                          <div className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+                            <TrendingDown className="w-4 h-4" />
+                            Potential savings: ${insight.savingsPotential.toLocaleString()}/month
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="space-y-5 w-full">
           <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">

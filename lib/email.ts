@@ -2,7 +2,7 @@ import type { AuditResult } from "@/lib/auditEngine";
 
 export interface SendAuditEmailInput {
   email: string;
-  auditData: AuditResult;
+  auditData: AuditResult | Record<string, any>; // Support enhanced audit
   companyName?: string;
 }
 
@@ -22,14 +22,15 @@ export function buildAuditEmailHtml({
 }: SendAuditEmailInput): string {
   const savings = auditData.potentialMonthlySavings;
   const spend = auditData.totalMonthlySpend;
-  const tools = auditData.subscriptions
+  const subscriptions = (auditData.subscriptions || []) as Array<{ name: string; monthlyCost: number }>;
+  const tools = subscriptions
     .map(
       (s) =>
         `<li><strong>${s.name}</strong>: ${formatCurrency(s.monthlyCost)}/mo</li>`
     )
     .join("");
 
-  const recommendations = auditData.recommendations
+  const recommendations = ((auditData.recommendations || []) as Array<{ title: string; estimatedMonthlySavings: number; description: string }>)
     .map(
       (r) =>
         `<li><strong>${r.title}</strong> — save ~${formatCurrency(r.estimatedMonthlySavings)}/mo<br/><span style="color:#666">${r.description}</span></li>`

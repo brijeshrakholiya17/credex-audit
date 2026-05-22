@@ -29,6 +29,8 @@ create table if not exists leads (
   created_at timestamptz not null default now()
 );
 
+alter table leads add column if not exists audit_data jsonb;
+
 create index if not exists leads_email_created_at_idx on leads (email, created_at desc);
 
 alter table leads enable row level security;

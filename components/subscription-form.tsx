@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Minus, Plus, ArrowRight, ArrowLeft } from "lucide-react";
+import { Minus, Plus, ArrowRight, ArrowLeft, AlertCircle } from "lucide-react";
+import { validateFormData } from "@/lib/advancedAuditEngine";
 
 const STORAGE_KEY = "ai-spend-form-data";
 
@@ -104,6 +105,7 @@ export function SubscriptionForm({ onSubmit }: SubscriptionFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<SpendFormData>(getInitialFormData);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     setFormData(loadFormDataFromStorage());
@@ -145,6 +147,15 @@ export function SubscriptionForm({ onSubmit }: SubscriptionFormProps) {
   };
 
   function handleRunAudit() {
+    const validation = validateFormData(formData);
+    
+    if (!validation.valid) {
+      setValidationErrors(validation.errors);
+      return;
+    }
+
+    // Clear errors if validation passes
+    setValidationErrors([]);
     onSubmit(formData);
   }
 
@@ -172,6 +183,27 @@ export function SubscriptionForm({ onSubmit }: SubscriptionFormProps) {
           )}
         />
       </div>
+
+      {/* Validation Errors Alert */}
+      {validationErrors.length > 0 && (
+        <div className="mx-6 mt-6 p-4 rounded-lg border border-red-200 bg-red-50 space-y-2">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-red-900">
+                Please fix the following issues:
+              </p>
+              <ul className="text-sm text-red-700 space-y-1 ml-2">
+                {validationErrors.map((error, idx) => (
+                  <li key={idx} className="list-disc">
+                    {error}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="px-6 sm:px-10 py-8">
         {step === 1 ? (

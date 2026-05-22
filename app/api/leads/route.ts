@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 
 import type { AuditResult } from "@/lib/auditEngine";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 
 export interface LeadPayload {
   email: string;
   companyName?: string;
   role?: string;
   teamSize?: string;
-  auditData: AuditResult;
+  auditData: AuditResult | Record<string, any>; // Support enhanced audit
   website?: string;
 }
 
@@ -43,22 +43,49 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = createAdminClient();
+    // Use service role key if available, otherwise use anon key
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error("Missing Supabase configuration:", {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!serviceRoleKey,
+        hasAnonKey: !!anonKey,
+      });
+      return NextResponse.json(
+        { error: "Server configuration incomplete. Please check environment variables." },
+        { status: 500 }
+      );
+    }
+
+    // Prefer service role key for admin operations
+    const supabase = createClient(supabaseUrl, serviceRoleKey || anonKey);
+
     const { data, error } = await supabase
       .from("leads")
-      .insert({
-        email: email.toLowerCase().trim(),
-        company_name: companyName ?? null,
-        role: role ?? null,
-        team_size: teamSize ?? null,
-        audit_data: auditData,
-      })
+      .insert([
+        {
+          email: email.toLowerCase().trim(),
+          company_name: companyName ?? null,
+          role: role ?? null,
+          team_size: teamSize ?? null,
+          audit_data: auditData,
+        },
+      ])
       .select("id")
       .single();
 
     if (error) {
       console.error("Supabase leads insert error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { 
+          error: error.message,
+          details: error.code
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -70,6 +97,11 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Leads API error:", err);
-    return NextResponse.json({ error: "Failed to save lead" }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: err instanceof Error ? err.message : "Failed to save lead"
+      },
+      { status: 500 }
+    );
   }
 }
