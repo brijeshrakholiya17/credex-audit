@@ -1,5 +1,4 @@
 import type { AuditResult, SavingsRecommendation } from "@/lib/auditEngine";
-import type { AIToolId } from "@/lib/pricing";
 
 export type ToolStatus = "save" | "optimal" | "switch";
 
@@ -12,21 +11,6 @@ export interface ToolResult {
   reason: string;
   status: ToolStatus;
 }
-
-const AUDIT_ID_TO_FORM_ID: Partial<Record<AIToolId, string>> = {
-  "cursor-pro": "cursor",
-  "github-copilot": "github-copilot",
-  "claude-pro": "claude",
-  "claude-team": "claude",
-  "chatgpt-plus": "chatgpt",
-  "chatgpt-team": "chatgpt",
-  "gemini-advanced": "gemini",
-  "copilot-pro": "chatgpt",
-  "midjourney-basic": "midjourney-basic",
-  "midjourney-standard": "midjourney-standard",
-  "notion-ai": "notion-ai",
-  "perplexity-pro": "perplexity-pro",
-};
 
 function recommendationStatus(
   type: SavingsRecommendation["type"]
@@ -46,7 +30,7 @@ export function mapAuditResultToToolResults(result: AuditResult & { advancedInsi
     const perTool =
       rec.estimatedMonthlySavings / Math.max(rec.affectedTools.length, 1);
     for (const toolId of rec.affectedTools) {
-      const formId = AUDIT_ID_TO_FORM_ID[toolId as AIToolId] ?? toolId;
+      const formId = toolId;
       const existing = toolRecs.get(formId);
       if (!existing || perTool > existing.savingsShare) {
         toolRecs.set(formId, { 
@@ -79,7 +63,7 @@ export function mapAuditResultToToolResults(result: AuditResult & { advancedInsi
   }
 
   return result.subscriptions.map((sub) => {
-    const formId = AUDIT_ID_TO_FORM_ID[sub.toolId as AIToolId] ?? sub.toolId;
+    const formId = sub.toolId;
     const entry = toolRecs.get(formId);
 
     if (entry) {

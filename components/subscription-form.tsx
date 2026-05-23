@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Minus, Plus, ArrowRight, ArrowLeft, AlertCircle } from "lucide-react";
 import { validateFormData } from "@/lib/advancedAuditEngine";
+import { TOOL_PLANS } from "@/lib/pricing";
 
 const STORAGE_KEY = "ai-spend-form-data";
 
@@ -27,44 +28,6 @@ const AI_TOOLS = [
   { id: "gemini", name: "Gemini", icon: "✦" },
   { id: "windsurf", name: "Windsurf", icon: "▲" },
 ] as const;
-
-export const TOOL_PLANS: Record<string, {name: string, price: number}[]> = {
-  "chatgpt": [
-    { name: "Free", price: 0 },
-    { name: "Plus", price: 20 },
-    { name: "Team", price: 30 },
-  ],
-  "claude": [
-    { name: "Free", price: 0 },
-    { name: "Pro", price: 20 },
-    { name: "Team", price: 30 },
-  ],
-  "gemini": [
-    { name: "Free", price: 0 },
-    { name: "Advanced", price: 19.99 },
-  ],
-  "github-copilot": [
-    { name: "Individual", price: 10 },
-    { name: "Business", price: 19 },
-    { name: "Enterprise", price: 39 },
-  ],
-  "cursor": [
-    { name: "Hobby", price: 0 },
-    { name: "Pro", price: 20 },
-    { name: "Business", price: 40 },
-  ],
-  "windsurf": [
-    { name: "Free", price: 0 },
-    { name: "Pro", price: 20 },
-    { name: "Teams", price: 40 },
-  ],
-  "openai-api": [
-    { name: "Pay-as-you-go", price: 0 },
-  ],
-  "anthropic-api": [
-    { name: "Pay-as-you-go", price: 0 },
-  ],
-};
 
 const TEAM_SIZES = ["Just me", "2-5", "6-15", "16-50", "51-200", "200+"] as const;
 const USE_CASES = ["Coding", "Writing", "Data", "Research", "Mixed"] as const;

@@ -37,6 +37,7 @@ const toolIcons: Record<string, string> = {
 export interface AuditResultsProps {
   result: AuditResult | EnhancedAuditOutput;
   onEmailCaptureClick?: () => void;
+  isPublicView?: boolean;
 }
 
 function isEnhancedAudit(result: AuditResult | EnhancedAuditOutput): result is EnhancedAuditOutput {
@@ -65,7 +66,7 @@ function getInsightBg(type: "warning" | "success" | "info") {
   }
 }
 
-export function AuditResults({ result, onEmailCaptureClick }: AuditResultsProps) {
+export function AuditResults({ result, onEmailCaptureClick, isPublicView }: AuditResultsProps) {
   const [internalModalOpen, setInternalModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -309,83 +310,87 @@ export function AuditResults({ result, onEmailCaptureClick }: AuditResultsProps)
           </div>
         </section>
 
-        <section className="w-full">
-          {showNewsletterOnly ? (
-            <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
-              <CardContent className="p-8 sm:p-10 flex flex-col items-center text-center space-y-5">
-                <div className="w-16 h-16 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center">
-                  <Check className="h-8 w-8 text-sky-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-[#1c1917]">
-                  You&apos;re spending well
-                </h3>
-                <p className="text-[#57534e] max-w-sm leading-relaxed">
-                  Your AI stack is already optimized. Get tips by email for
-                  future savings opportunities.
-                </p>
-                <Button
-                  onClick={openEmailModal}
-                  className="bg-[#cc785c] hover:bg-[#b86a50] text-white gap-2 rounded-full h-11 px-6"
-                >
-                  <Mail className="h-4 w-4" />
-                  Get tips by email
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
-              <CardContent className="p-8 sm:p-10 flex flex-col items-center text-center space-y-5">
-                <h3 className="text-xl font-semibold text-[#1c1917]">
-                  Capture your report
-                </h3>
-                <p className="text-[#57534e] max-w-sm leading-relaxed">
-                  We&apos;ll email a detailed breakdown of your savings
-                  opportunities and personalized recommendations.
-                </p>
-                <Button
-                  onClick={openEmailModal}
-                  className="bg-[#cc785c] hover:bg-[#b86a50] text-white gap-2 rounded-full h-11 px-6"
-                >
-                  <Mail className="h-4 w-4" />
-                  Send my report
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </section>
+        {!isPublicView && (
+          <section className="w-full">
+            {showNewsletterOnly ? (
+              <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
+                <CardContent className="p-8 sm:p-10 flex flex-col items-center text-center space-y-5">
+                  <div className="w-16 h-16 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center">
+                    <Check className="h-8 w-8 text-sky-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-[#1c1917]">
+                    You&apos;re spending well
+                  </h3>
+                  <p className="text-[#57534e] max-w-sm leading-relaxed">
+                    Your AI stack is already optimized. Get tips by email for
+                    future savings opportunities.
+                  </p>
+                  <Button
+                    onClick={openEmailModal}
+                    className="bg-[#cc785c] hover:bg-[#b86a50] text-white gap-2 rounded-full h-11 px-6"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Get tips by email
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
+                <CardContent className="p-8 sm:p-10 flex flex-col items-center text-center space-y-5">
+                  <h3 className="text-xl font-semibold text-[#1c1917]">
+                    Capture your report
+                  </h3>
+                  <p className="text-[#57534e] max-w-sm leading-relaxed">
+                    We&apos;ll email a detailed breakdown of your savings
+                    opportunities and personalized recommendations.
+                  </p>
+                  <Button
+                    onClick={openEmailModal}
+                    className="bg-[#cc785c] hover:bg-[#b86a50] text-white gap-2 rounded-full h-11 px-6"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Send my report
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        )}
 
-        {shareError && (
+        {shareError && !isPublicView && (
           <p className="text-sm text-red-600 text-center">{shareError}</p>
         )}
 
-        <div className="flex justify-center pt-2">
-          <Button
-            onClick={handleShare}
-            disabled={sharing}
-            variant="outline"
-            className="rounded-full border-[#e7e5e4] bg-white text-[#1c1917] hover:bg-[#f5f4f0] gap-2 h-11 px-6"
-          >
-            {sharing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving…
-              </>
-            ) : copied ? (
-              <>
-                <Check className="h-4 w-4 text-emerald-600" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" />
-                Share results
-              </>
-            )}
-          </Button>
-        </div>
+        {!isPublicView && (
+          <div className="flex justify-center pt-2">
+            <Button
+              onClick={handleShare}
+              disabled={sharing}
+              variant="outline"
+              className="rounded-full border-[#e7e5e4] bg-white text-[#1c1917] hover:bg-[#f5f4f0] gap-2 h-11 px-6"
+            >
+              {sharing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : copied ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Share results
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {!onEmailCaptureClick && (
+      {!onEmailCaptureClick && !isPublicView && (
         <EmailCaptureModal
           isOpen={internalModalOpen}
           onClose={() => setInternalModalOpen(false)}
