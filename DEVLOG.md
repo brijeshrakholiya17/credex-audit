@@ -54,6 +54,6 @@ Next.js Server Components make dynamic OpenGraph metadata generation incredibly 
 Encountered a 500 Internal Server Error during phase 3 testing when attempting to share an audit result. The console threw a "Could not find the table 'public.audits' in the schema cache" error. I realized the database schema hadn't been updated to match the new backend logic. Resolved this by directly executing the necessary CREATE TABLE SQL query in the Supabase dashboard to establish the correct columns (share_id, results as JSONB, etc.), which immediately fixed the endpoint.
  
 **Plan for tomorrow:**
-Conduct comprehensive cross-browser and mobile responsiveness testing on the public shared audit pages. Implement user analytics to track engagement on shared links, and perform a final end-to-end audit of the entire codebase (linting, type checking, and UI edge cases) to ensure the application is fully polished for production deployment.
+Integrate the Anthropic API to generate a personalized, CFO-style executive summary of the audit results, including a fallback mechanism, and wire it into the AuditResults dashboard. Set up a testing environment using Vitest and write five core unit tests to validate the auditEngine.ts heuristics (testing small team downgrades, duplicate tools, and exact savings math). Finally, implement a GitHub Actions CI pipeline (ci.yml) to automatically run linting and tests on all pushes and pull requests to the main branch.
  
 ---
