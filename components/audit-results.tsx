@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +71,43 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [summaryData, setSummaryData] = useState<{ summary: string; isFallback: boolean } | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const payload = {
+          teamSize: isEnhancedAudit(result) ? result.teamSize : "unknown",
+          useCases: isEnhancedAudit(result) ? result.useCases : [],
+          enabledTools: result.subscriptions.map((s) => s.toolId),
+          totalSpend: result.totalMonthlySpend,
+          totalSavings: result.potentialMonthlySavings,
+          topRecommendations: result.recommendations.map((r) => r.description),
+        };
+
+        const res = await fetch("/api/generate-summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch summary");
+        
+        const data = await res.json();
+        setSummaryData(data);
+      } catch (err) {
+        setSummaryData({
+          summary: "Review your subscriptions quarterly to ensure your team is using the most cost-effective tools for your needs.",
+          isFallback: true,
+        });
+      } finally {
+        setLoadingSummary(false);
+      }
+    }
+    
+    fetchSummary();
+  }, [result]);
 
   const toolResults = useMemo(
     () => mapAuditResultToToolResults(result),
@@ -242,6 +279,41 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
             </div>
           </section>
         )}
+
+        {/* Personalized Summary Section */}
+        <section className="w-full">
+          {loadingSummary ? (
+            <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
+              <CardContent className="p-5 sm:p-6 space-y-3">
+                <div className="h-4 w-32 bg-[#e7e5e4] rounded animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-[#e7e5e4] rounded animate-pulse" />
+                  <div className="h-4 w-[90%] bg-[#e7e5e4] rounded animate-pulse" />
+                  <div className="h-4 w-[80%] bg-[#e7e5e4] rounded animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : summaryData ? (
+            <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">
+                    Personalized summary
+                  </h3>
+                  {!summaryData.isFallback && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-[#f5f4f0] text-[#57534e] border border-[#e7e5e4]">
+                      <Sparkles className="h-3 w-3" />
+                      AI-generated
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm md:text-base text-[#1c1917] leading-relaxed">
+                  {summaryData.summary}
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
+        </section>
 
         <section className="space-y-5 w-full">
           <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">

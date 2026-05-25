@@ -19,18 +19,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const savings = data?.total_monthly_savings || 0;
 
   return {
-    title: `AI Spend Audit — Saving $${savings}/mo`,
-    description: "See the full breakdown",
+    title: `AI Spend Audit — $${savings}/mo in savings found`,
+    description: "Free AI spend audit tool by Credex",
     openGraph: {
-      title: `AI Spend Audit — Saving $${savings}/mo`,
-      description: "See the full breakdown",
-      images: ["/og-image.png"],
+      title: `AI Spend Audit — $${savings}/mo in savings found`,
+      description: "Free AI spend audit tool by Credex",
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
-      title: `AI Spend Audit — Saving $${savings}/mo`,
-      description: "See the full breakdown",
-      images: ["/og-image.png"],
     },
   };
 }
