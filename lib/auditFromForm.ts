@@ -60,8 +60,11 @@ export function buildAuditFromForm(formData: SpendFormData): AuditOutput {
   // Combine legacy and advanced analysis
   const enhancedOutput: EnhancedAuditOutput = {
     ...baseAudit,
-    // Use advanced insights' savings calculation
-    potentialMonthlySavings: Math.max(baseAudit.potentialMonthlySavings, totalAdvancedSavings),
+    // Use advanced insights' savings calculation, but NEVER exceed total spend
+    potentialMonthlySavings: Math.min(
+      Math.max(baseAudit.potentialMonthlySavings, totalAdvancedSavings),
+      baseAudit.totalMonthlySpend
+    ),
     advancedInsights: advancedReport.insights,
     teamSize: formData.teamSize,
     useCases: formData.useCases,

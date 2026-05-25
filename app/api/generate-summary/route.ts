@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize the Anthropic client. It will automatically use the ANTHROPIC_API_KEY environment variable.
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "dummy-key-to-prevent-startup-crash", 
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key-to-prevent-startup-crash");
 
 export async function POST(req: NextRequest) {
   let body: any = {};
@@ -20,14 +17,8 @@ export async function POST(req: NextRequest) {
       topRecommendations,
     } = body;
 
-    const toolCount = enabledTools?.length || 0;
-    const firstRec =
-      topRecommendations && topRecommendations.length > 0
-        ? topRecommendations[0]
-        : "";
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new Error("Missing ANTHROPIC_API_KEY environment variable");
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY environment variable");
     }
 
     const enabledToolsString = enabledTools?.join(", ") || "none";
@@ -43,18 +34,14 @@ Top recommendations: ${recommendationsString}
 
 Write a single 100-word paragraph summarizing their situation and most important next step. Be direct, specific, no fluff. No bullet points. Plain prose only.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 200,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
     return NextResponse.json({ summary: text, isFallback: false });
   } catch (error) {
-    console.error("Summary generation error:", error);
+    console.error("Summary generation error:", error instanceof Error ? error.message : error);
+    console.log("⚠️ Gemini API failed or key missing. Returning fallback text instead.");
     
     // Fallback logic
     const teamSize = body?.teamSize || "unknown size";

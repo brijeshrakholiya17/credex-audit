@@ -165,19 +165,41 @@ export function runAudit(subscriptions: SubscriptionInput[]): AuditResult {
 
   const totalMonthlySpend = subscriptionBreakdown.reduce((sum, s) => sum + s.monthlyCost, 0);
 
-  const detectors = [
+  const expertDetectors = [
+    detectTeamAndIndividualOverlap,
     detectDuplicateChatTools,
     detectDuplicateCodeTools,
     detectMidjourneyDowngrade,
     detectAnnualBillingOpportunity,
-    detectTeamAndIndividualOverlap,
     detectSmallTeamSeatsDowngrade,
     detectApiSubscriptionSuggestion,
   ];
 
-  const recommendations = detectors.map((fn) => fn(subscriptions)).filter((r): r is SavingsRecommendation => r !== null);
+  let activeSubscriptions = [...subscriptions];
+  const recommendations: SavingsRecommendation[] = [];
 
-  const potentialMonthlySavings = recommendations.reduce((sum, r) => sum + r.estimatedMonthlySavings, 0);
+  for (const detector of expertDetectors) {
+    const rec = detector(activeSubscriptions);
+    if (rec) {
+      recommendations.push(rec);
+      // If the recommendation is to completely cancel/consolidate, we must remove
+      // those affected tools from activeSubscriptions so subsequent detectors
+      // (like downgrades or other consolidations) don't try to double-count them.
+      if (rec.type === "duplicate" || rec.type === "consolidate") {
+        activeSubscriptions = activeSubscriptions.filter(
+          (s) => !rec.affectedTools.includes(s.toolId)
+        );
+      }
+    }
+  }
+
+  let potentialMonthlySavings = recommendations.reduce(
+    (sum, r) => sum + r.estimatedMonthlySavings,
+    0
+  );
+
+  // 5. Cap savings so they never exceed the total spend
+  potentialMonthlySavings = Math.min(potentialMonthlySavings, totalMonthlySpend);
 
   return {
     totalMonthlySpend: Math.round(totalMonthlySpend * 100) / 100,
