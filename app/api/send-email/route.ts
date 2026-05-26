@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await resend.emails.send({
       from,
-      to: [email],
+      to: [process.env.RESEND_VERIFIED_EMAIL ?? email],
+      replyTo: email,
       subject: `Your AI Spend Audit — ${formatCurrency(savings)}/mo in potential savings`,
       html: buildAuditEmailHtml({ email, auditData, companyName }),
     });
