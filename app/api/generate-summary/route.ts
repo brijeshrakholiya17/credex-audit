@@ -8,6 +8,14 @@ export async function POST(req: NextRequest) {
   
   try {
     body = await req.json();
+  } catch (err) {
+    return NextResponse.json({ summary: "Failed to parse request.", isFallback: true }, { status: 200 });
+  }
+
+  let summary = '';
+  let isFallback = false;
+
+  try {
     const {
       teamSize,
       useCases,
@@ -36,28 +44,21 @@ Write a single 100-word paragraph summarizing their situation and most important
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    summary = result.response.text();
 
-    return NextResponse.json({ summary: text, isFallback: false });
-  } catch (error) {
-    console.error("Summary generation error:", error instanceof Error ? error.message : error);
-    console.log("⚠️ Gemini API failed or key missing. Returning fallback text instead.");
+  } catch (aiError) {
+    console.error("AI generation failed, using fallback:", aiError);
+    isFallback = true;
     
-    // Fallback logic
-    const teamSize = body?.teamSize || "unknown size";
-    const totalSpend = body?.totalSpend || 0;
-    const totalSavings = body?.totalSavings || 0;
-    const toolCount = body?.enabledTools?.length || 0;
-    const topRecs = body?.topRecommendations || [];
-    const firstRec = topRecs.length > 0 ? topRecs[0] : "";
+    // Build fallback from the request data
+    const toolCount = body.enabledTools?.length || 
+      Object.values(body.tools || {}).filter((t: any) => t.enabled).length || 0;
     
-    const recSentence = firstRec ? ` ${firstRec}.` : "";
-
-    const fallbackText = `Your team of ${teamSize} is spending $${totalSpend}/month across ${toolCount} AI tools. Our audit identified $${totalSavings}/month in potential savings — $${totalSavings * 12}/year.${recSentence} Review your subscriptions quarterly as AI tool pricing changes frequently.`;
-
-    return NextResponse.json({
-      summary: fallbackText,
-      isFallback: true,
-    });
+    summary = `Your team of ${body.teamSize || 'your size'} is currently spending $${body.totalSpend || 0}/month across ${toolCount} AI tools. Our audit identified $${body.totalSavings || 0}/month in potential savings — $${(body.totalSavings || 0) * 12}/year. ${body.topRecommendations?.[0] || 'Review your subscriptions to eliminate overlap and right-size your plans.'} AI tool pricing changes frequently — quarterly reviews can compound savings significantly over time.`;
   }
+
+  return NextResponse.json({ 
+    summary, 
+    isFallback 
+  }, { status: 200 });
 }

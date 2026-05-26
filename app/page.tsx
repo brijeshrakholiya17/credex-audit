@@ -25,6 +25,7 @@ function scrollToRef(ref: React.RefObject<HTMLElement | null>) {
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<PageView>("landing");
   const [auditResults, setAuditResults] = useState<AuditOutput | null>(null);
+  const [lastFormData, setLastFormData] = useState<SpendFormData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
 
@@ -50,6 +51,7 @@ export default function HomePage() {
       await new Promise((resolve) => setTimeout(resolve, 400));
       const output = buildAuditFromForm(formData);
       setAuditResults(output);
+      setLastFormData(formData);
       setCurrentView("results");
 
       requestAnimationFrame(() => scrollToRef(resultsRef));
@@ -102,6 +104,7 @@ export default function HomePage() {
               {!isAuditing && auditResults && (
                 <AuditResults
                   result={auditResults}
+                  formData={lastFormData}
                   onEmailCaptureClick={() => setModalOpen(true)}
                 />
               )}

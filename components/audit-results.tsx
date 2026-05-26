@@ -36,6 +36,7 @@ const toolIcons: Record<string, string> = {
 
 export interface AuditResultsProps {
   result: AuditResult | EnhancedAuditOutput;
+  formData?: any;
   onEmailCaptureClick?: () => void;
   isPublicView?: boolean;
 }
@@ -66,7 +67,7 @@ function getInsightBg(type: "warning" | "success" | "info") {
   }
 }
 
-export function AuditResults({ result, onEmailCaptureClick, isPublicView }: AuditResultsProps) {
+export function AuditResults({ result, formData, onEmailCaptureClick, isPublicView }: AuditResultsProps) {
   const [internalModalOpen, setInternalModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -78,9 +79,11 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
     async function fetchSummary() {
       try {
         const payload = {
-          teamSize: isEnhancedAudit(result) ? result.teamSize : "unknown",
-          useCases: isEnhancedAudit(result) ? result.useCases : [],
-          enabledTools: result.subscriptions.map((s) => s.toolId),
+          teamSize: formData?.teamSize || (isEnhancedAudit(result) ? result.teamSize : "unknown"),
+          useCases: formData?.useCases || (isEnhancedAudit(result) ? result.useCases : []),
+          enabledTools: formData?.tools 
+            ? Object.keys(formData.tools).filter(key => formData.tools[key].enabled) 
+            : result.subscriptions.map((s) => s.toolId),
           totalSpend: result.totalMonthlySpend,
           totalSavings: result.potentialMonthlySavings,
           topRecommendations: result.recommendations.map((r) => r.description),
@@ -107,7 +110,7 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
     }
     
     fetchSummary();
-  }, [result]);
+  }, [result, formData]);
 
   const toolResults = useMemo(
     () => mapAuditResultToToolResults(result),

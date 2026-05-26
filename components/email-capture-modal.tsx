@@ -59,6 +59,15 @@ export function EmailCaptureModal({
     e.preventDefault();
     if (!email) return;
 
+    console.log('Modal submit — auditResult:', JSON.stringify(auditResult, null, 2));
+    console.log('totalSavings:', totalSavings);
+
+    if (!auditResult || Object.keys(auditResult).length === 0) {
+      setError('Audit data missing. Please run the audit again and try submitting.');
+      setIsSubmitting(false);
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -67,7 +76,7 @@ export function EmailCaptureModal({
       companyName: companyName || undefined,
       role: role || undefined,
       teamSize: teamSize || undefined,
-      auditData: auditResult,
+      auditData: JSON.parse(JSON.stringify(auditResult)),
       website: honeypot,
     };
 
@@ -86,12 +95,7 @@ export function EmailCaptureModal({
       const emailRes = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          companyName: companyName || undefined,
-          auditData: auditResult,
-          website: honeypot,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!emailRes.ok) {
