@@ -325,6 +325,7 @@ function ToolCard({ tool, config, onUpdate }: ToolCardProps) {
           checked={config.enabled}
           onCheckedChange={(enabled: boolean) => onUpdate({ enabled })}
           className="data-[state=checked]:bg-[#cc785c]"
+          aria-label={`Toggle ${tool.name}`}
         />
       </div>
 
@@ -376,7 +377,7 @@ function ToolCard({ tool, config, onUpdate }: ToolCardProps) {
                   onChange={(e) =>
                     onUpdate({ monthlySpend: parseFloat(e.target.value) || 0 })
                   }
-                  className="pl-6 h-8 text-xs bg-white border-[#e7e5e4] text-[#1c1917] placeholder:text-[#a8a29e]"
+                  className="pl-6 h-8 text-xs bg-white border-[#e7e5e4] text-[#1c1917] placeholder:text-[#78716c]"
                   placeholder="0"
                 />
               </div>
@@ -392,6 +393,7 @@ function ToolCard({ tool, config, onUpdate }: ToolCardProps) {
                   size="icon"
                   onClick={() => onUpdate({ seats: Math.max(1, config.seats - 1) })}
                   className="h-8 w-8 bg-white border-[#e7e5e4] text-[#1c1917]"
+                  aria-label="Decrease seats"
                 >
                   <Minus className="w-3 h-3" />
                 </Button>
@@ -404,6 +406,7 @@ function ToolCard({ tool, config, onUpdate }: ToolCardProps) {
                   size="icon"
                   onClick={() => onUpdate({ seats: config.seats + 1 })}
                   className="h-8 w-8 bg-white border-[#e7e5e4] text-[#1c1917]"
+                  aria-label="Increase seats"
                 >
                   <Plus className="w-3 h-3" />
                 </Button>

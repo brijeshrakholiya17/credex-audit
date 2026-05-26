@@ -9,7 +9,7 @@ export function SiteFooter() {
             AI Spend Audit — find overlap and savings across your AI
             subscriptions.
           </p>
-          <p className="text-xs text-[#a8a29e]">
+          <p className="text-xs text-[#78716c]">
             Pricing estimates for planning only; verify with vendors.
           </p>
         </div>

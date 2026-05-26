@@ -1,20 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 import type { AuditResult } from "@/lib/auditEngine";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
-import { createClient } from "@supabase/supabase-js";
+
+export const runtime = 'nodejs';
 
 export interface LeadPayload {
   email: string;
   companyName?: string;
   role?: string;
   teamSize?: string;
-  auditData: AuditResult | Record<string, any>; // Support enhanced audit
+  auditData: AuditResult | Record<string, any>;
   website?: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  console.log('LEADS API HIT — env check:', {
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasResendKey: !!process.env.RESEND_API_KEY,
+  });
+
   try {
+    const { createClient } = await import('@supabase/supabase-js');
+    
     const body = (await request.json()) as LeadPayload;
     const { email, companyName, role, teamSize, auditData, website } = body;
 
@@ -43,12 +52,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use service role key if available, otherwise use anon key
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+    if (!supabaseUrl || (!serviceRoleKey && !anonKey)) {
       console.error("Missing Supabase configuration:", {
         hasUrl: !!supabaseUrl,
         hasServiceKey: !!serviceRoleKey,
@@ -60,8 +68,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prefer service role key for admin operations
-    const supabase = createClient(supabaseUrl, serviceRoleKey || anonKey);
+    const supabase = createClient(supabaseUrl, (serviceRoleKey || anonKey)!);
 
     const { data, error } = await supabase
       .from("leads")
@@ -96,11 +103,9 @@ export async function POST(request: Request) {
       auditData,
     });
   } catch (err) {
-    console.error("Leads API error:", err);
+    console.error('LEADS API ERROR:', JSON.stringify(err, null, 2));
     return NextResponse.json(
-      { 
-        error: err instanceof Error ? err.message : "Failed to save lead"
-      },
+      { error: 'Internal server error', details: String(err) },
       { status: 500 }
     );
   }

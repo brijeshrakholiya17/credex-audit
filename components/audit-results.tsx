@@ -194,7 +194,7 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
             </p>
             <h2 className="text-6xl sm:text-7xl md:text-8xl font-semibold tracking-tight text-[#1c1917] tabular-nums">
               ${totalSavings.toLocaleString()}
-              <span className="text-3xl sm:text-4xl font-medium text-[#a8a29e]">
+              <span className="text-3xl sm:text-4xl font-medium text-[#78716c]">
                 /mo
               </span>
             </h2>
@@ -205,20 +205,22 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
               </span>{" "}
               in potential savings
             </p>
-            <p className="text-sm text-[#a8a29e]">
+            <p className="text-sm text-[#78716c]">
               Current spend: ${result.totalMonthlySpend.toLocaleString()}/mo
             </p>
           </div>
 
           {showConsultationCTA && (
-            <Button
-              size="lg"
-              className="bg-[#cc785c] hover:bg-[#b86a50] text-white font-medium px-8 h-12 gap-2 rounded-full shadow-md"
+            <a
+              href="https://credex.rocks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#cc785c] hover:bg-[#b86a50] text-white font-medium px-8 h-12 rounded-full shadow-md transition-all hover:shadow-lg hover:scale-105"
             >
               <Sparkles className="h-5 w-5" />
               Book a Credex Consultation
               <ArrowRight className="h-5 w-5" />
-            </Button>
+            </a>
           )}
         </section>
 
@@ -226,7 +228,7 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
         {enhanced && result.advancedInsights.length > 0 && (
           <section className="space-y-5 w-full">
             <div className="flex items-center justify-between">
-              <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">
+              <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#78716c]">
                 🧠 Financial Insights
               </h3>
               {result.riskLevel && (
@@ -297,7 +299,7 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
             <Card className="border-[#e7e5e4] bg-[#faf9f7] shadow-none">
               <CardContent className="p-5 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-[#78716c]">
                     Personalized summary
                   </h3>
                   {!summaryData.isFallback && (
@@ -316,7 +318,7 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
         </section>
 
         <section className="space-y-5 w-full">
-          <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#a8a29e]">
+          <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-[#78716c]">
             Tool-by-tool breakdown
           </h3>
 
@@ -391,18 +393,19 @@ export function AuditResults({ result, onEmailCaptureClick, isPublicView }: Audi
                     <Check className="h-8 w-8 text-sky-600" />
                   </div>
                   <h3 className="text-xl font-semibold text-[#1c1917]">
-                    You&apos;re spending well
+                    You&apos;re already optimized
                   </h3>
                   <p className="text-[#57534e] max-w-sm leading-relaxed">
-                    Your AI stack is already optimized. Get tips by email for
-                    future savings opportunities.
+                    Your AI stack looks lean. We&apos;ll notify you when
+                    new savings opportunities appear for your exact
+                    tools and team size.
                   </p>
                   <Button
                     onClick={openEmailModal}
                     className="bg-[#cc785c] hover:bg-[#b86a50] text-white gap-2 rounded-full h-11 px-6"
                   >
                     <Mail className="h-4 w-4" />
-                    Get tips by email
+                    Notify me of future savings
                   </Button>
                 </CardContent>
               </Card>

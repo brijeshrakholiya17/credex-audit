@@ -1,11 +1,21 @@
-import { NextResponse } from "next/server";
-
+import { NextResponse, NextRequest } from "next/server";
 import type { AuditResult } from "@/lib/auditEngine";
-import { sendAuditEmail } from "@/lib/email";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { buildAuditEmailHtml } from "@/lib/email";
 
-export async function POST(request: Request) {
+export const runtime = 'nodejs';
+
+export async function POST(request: NextRequest) {
+  console.log('SEND-EMAIL API HIT — env check:', {
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasResendKey: !!process.env.RESEND_API_KEY,
+  });
+
   try {
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     const body = (await request.json()) as {
       email?: string;
       auditData?: AuditResult | Record<string, any>;
@@ -36,7 +46,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if Resend API key is configured
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey || resendKey.includes("your_api_key")) {
       return NextResponse.json(
@@ -48,22 +57,40 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      await sendAuditEmail({ email, auditData, companyName });
-      return NextResponse.json({ ok: true });
-    } catch (emailErr) {
-      console.error("Email send error:", emailErr);
+    const from = process.env.RESEND_FROM_EMAIL ?? "AI Spend Audit <onboarding@resend.dev>";
+    
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+
+    const savings = auditData.potentialMonthlySavings || 0;
+
+    const { data, error } = await resend.emails.send({
+      from,
+      to: [email],
+      subject: `Your AI Spend Audit — ${formatCurrency(savings)}/mo in potential savings`,
+      html: buildAuditEmailHtml({ email, auditData, companyName }),
+    });
+
+    if (error) {
+      console.error("Email send error:", error);
       return NextResponse.json(
-        { 
-          error: emailErr instanceof Error ? emailErr.message : "Failed to send email"
-        },
+        { error: error.message || "Failed to send email" },
         { status: 500 }
       );
     }
+
+    return NextResponse.json({ ok: true, data });
   } catch (err) {
-    console.error("Send email route error:", err);
-    const message =
-      err instanceof Error ? err.message : "Failed to send email";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('SEND-EMAIL API ERROR:', JSON.stringify(err, null, 2));
+    return NextResponse.json(
+      { error: 'Internal server error', details: String(err) },
+      { status: 500 }
+    );
   }
 }

@@ -1,6 +1,33 @@
 # AI Spend Audit
 
-Next.js 14 app for auditing AI tool subscriptions and surfacing savings recommendations.
+Free tool for startup founders and engineering managers to find where they're overpaying on AI tools. Enter your subscriptions, get an instant audit with savings recommendations.
+
+## Screenshots
+![Audit Form](screenshots/1.png)
+![Audit Results](screenshots/2.png)
+![Email Capture](screenshots/3.png)
+
+## Quick Start
+
+```bash
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+## Decisions
+
+1. **Next.js App Router over Pages Router** — needed SSR for OG meta tags on share pages
+2. **Supabase over MongoDB** — relational data + auto REST API
+3. **Hardcoded audit rules over AI** — accuracy and predictability matter more than flexibility here
+4. **Resend over SES** — simplest free tier setup
+5. **Vitest over Jest** — faster, native TypeScript support
+
+## Live URL
+
+[https://credex-audit-chi.vercel.app/](https://credex-audit-chi.vercel.app/)
+
+---
 
 ## Stack
 
@@ -10,7 +37,7 @@ Next.js 14 app for auditing AI tool subscriptions and surfacing savings recommen
 - **shadcn/ui** (New York style)
 - **Supabase** (client ready for auth/data)
 
-## Project structure
+## Project Structure
 
 ```
 app/                 # App Router pages & layout
@@ -22,31 +49,7 @@ lib/
   supabase/          # Browser & server Supabase clients
 ```
 
-## Getting started
-
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Copy environment variables:
-
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-   Add your [Supabase](https://supabase.com) project URL and anon key.
-
-3. Run the dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000).
-
-## Supabase
+## Supabase Setup
 
 Clients live in `lib/supabase/client.ts` (browser) and `lib/supabase/server.ts` (server). Share links use `shared_audits` — run `supabase/schema.sql` in the Supabase SQL editor before using **Share Results**.
 
@@ -61,7 +64,7 @@ RESEND_FROM_EMAIL=AI Spend Audit <onboarding@resend.dev>
 
 Run the full `supabase/schema.sql` (includes `leads` table) before using email capture.
 
-## Audit engine
+## Audit Engine
 
 `lib/auditEngine.ts` analyzes subscriptions for:
 

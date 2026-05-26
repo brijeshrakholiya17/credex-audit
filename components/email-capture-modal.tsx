@@ -168,7 +168,7 @@ export function EmailCaptureModal({
 
           {totalSavings > 0 && (
             <div className="rounded-xl bg-[#faf9f7] border border-[#e7e5e4] px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#a8a29e]">
+              <p className="text-xs font-medium uppercase tracking-wider text-[#78716c]">
                 Your potential savings
               </p>
               <p className="text-2xl font-semibold text-[#cc785c] tabular-nums">
@@ -206,7 +206,7 @@ export function EmailCaptureModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 border-[#e7e5e4] bg-white text-[#1c1917] placeholder:text-[#a8a29e] focus:border-[#cc785c] focus:ring-[#cc785c]"
+                  className="h-11 border-[#e7e5e4] bg-white text-[#1c1917] placeholder:text-[#78716c] focus:border-[#cc785c] focus:ring-[#cc785c]"
                 />
               </div>
 
@@ -241,7 +241,7 @@ export function EmailCaptureModal({
                       placeholder="Acme Inc."
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="h-11 border-[#e7e5e4] bg-white text-[#1c1917] placeholder:text-[#a8a29e] focus:border-[#cc785c] focus:ring-[#cc785c]"
+                      className="h-11 border-[#e7e5e4] bg-white text-[#1c1917] placeholder:text-[#78716c] focus:border-[#cc785c] focus:ring-[#cc785c]"
                     />
                   </div>
 
@@ -304,7 +304,7 @@ export function EmailCaptureModal({
                 {isSubmitting ? "Sending..." : "Send my report →"}
               </Button>
 
-              <p className="text-center text-xs text-[#a8a29e]">
+              <p className="text-center text-xs text-[#78716c]">
                 High-savings audits get a personal note from the Credex team
               </p>
             </form>
